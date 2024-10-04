@@ -1,67 +1,74 @@
-import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useContext, useState } from "react";
+import { appContext } from "../App";
+import UserIcon from "./UserIcon";
 
-// eslint-disable-next-line react/prop-types
-function CreatePost({ username, onPostCreated }) {
-  const [title, setTitle] = useState("");
-  const [content, setContent] = useState("");
-  const navigate = useNavigate();
+export default function CreatePost() {
+  const { allPosts, setAllPosts, loggedInUser, users } = useContext(appContext);
+  const [newPost, setNewPost] = useState({
+    id: "",
+    contactId: "",
+    title: "",
+    content: "",
+  });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    const newPost = {
-      title,
-      content,
-      contactId: 1, 
-      authorName: 'Jacinto Botsford', 
-      authorInitials: 'JB', 
-      authorColor: '#36a093', 
-      comments: []
-    };
+  function handleSubmit(event) {
+    event.preventDefault();
+    newPost.id = allPosts.length + 1;
+    console.log("new post", newPost);
 
-    fetch(`https://boolean-uk-api-server.fly.dev/${username}/post`, {
-      method: 'POST',
+    fetch("https://boolean-uk-api-server.fly.dev/Muzea001/post", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json'
+        "Content-Type": "application/json",
       },
-      body: JSON.stringify(newPost)
+      body: JSON.stringify(newPost),
     })
-      .then(response => response.json())
-      .then(data => {
-        onPostCreated(data); 
-        navigate(`/`);
-      });
-  };
+      .then((res) => res.json())
+      .then((data) => setAllPosts([data, ...allPosts]));
 
-  return (
-    <div className="post-box">
-      <h2>Create Post</h2>
-      <form id="create-post" onSubmit={handleSubmit}>
-        <div>
-          <label htmlFor="title">Title</label>
-          <input
-            type="text"
-            id="title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
+    setNewPost({
+      id: "",
+      contactId: "",
+      title: "",
+      content: "",
+    });
+  }
+
+  function handleInput(event) {
+    const {name, value} = event.target
+    setNewPost ({
+      ...newPost,
+      contactId: loggedInUser.id,
+      [name] : value,
+    });
+  }
+
+  
+    return (
+      <>
+      {loggedInUser && (
+        <div className="create-post">
+          <UserIcon userInfo={loggedInUser} />
+          <form className="post-form" onSubmit={handleSubmit}>
+            <input type="text" id="title-input" name="title" placeholder="Title." value={newPost.title} onChange={handleInput} required></input>
+            <input
+              type="text"
+              id="post-input"
+              name="content"
+              placeholder="What's on your mind?"
+              onChange={handleInput}
+              value={newPost.content}
+              required
+            ></input>
+            <button className="post-submit" type="submit" onClick={function () {
+              handleSubmit(event)
+            }}>
+              Post
+            </button>
+          </form>
         </div>
-        <div>
-          <label htmlFor="content">Content</label>
-          <textarea
-            name="postContent"
-            placeholder="What's on your mind?"
-            id="content"
-            value={content}
-            onChange={(e) => setContent(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit">Create Post</button>
-      </form>
-    </div>
-  );
+        )}
+      </>
+    );
 }
-
-export default CreatePost;
+ 
